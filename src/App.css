@@ -1,0 +1,19 @@
+.customLoginCard{
+  background-color: black !important;
+  color: white !important;
+  border: 7px solid #19b5e5 !important;
+}
+.mainLogo{
+  width: 200px;
+}
+.heading{
+  font-size: 1.5rem;
+}
+.loginBtn{
+  background-color: #19b5e5 !important;
+}
+
+
+
+
+
