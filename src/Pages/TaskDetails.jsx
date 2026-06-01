@@ -48,7 +48,7 @@ const TaskDetails = () => {
         load();
     }, [id, task]);
 
-    const taskForTimerId = task?.id || state?.task?.id;
+    const taskForTimerId = task?.id;
     const { seconds, formatTime, rehydrate } = useTaskTimer(taskForTimerId);
 
     const openModal = () => setShowModal(true);

@@ -32,26 +32,6 @@ function App() {
   const [fullblur, setFullBlur] = useState(false);
   const { employee } = useUser()
   const empId = employee?.id
-  // useEffect(() => {
-  //   const checkStatus = async () => {
-  //     try {
-  //       const response = await axiosInstance.get(`/employee/status/${empId}`);
-
-  //       const status = response.data?.status;
-  //       if (status === 1) {
-  //         setFullBlur(false);
-  //       } else if (status === 0) {
-  //         setFullBlur(true);
-  //       }
-
-  //     } catch (error) {
-  //       console.error("Error fetching employee status:", error);
-  //       setFullBlur(false);
-  //     }
-  //   };
-
-  //   checkStatus();
-  // }, [empId]);
 
   useEffect(() => {
 

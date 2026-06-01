@@ -7,12 +7,13 @@ let audio = null;
 
 export function initPusher(empId) {
   if (!empId) return;
+
   if (pusherInstance && channelInstance) return;
 
   audio = new Audio("https://digitalxplode.in/sounds/task.mp3");
   audio.preload = "auto";
 
-  Pusher.logToConsole = true; 
+  Pusher.logToConsole = true; // debug के लिए (बाद में false कर देना)
 
   pusherInstance = new Pusher("b7c70fac15ddf21537d9", {
     cluster: "ap2",

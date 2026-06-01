@@ -35,7 +35,7 @@ const useTaskTimer = (taskId) => {
   // Initial + periodic server re-sync (every 60s) to avoid drift
   useEffect(() => {
     hydrate();
-    syncRef.current = window.setInterval(hydrate, 60000);
+    syncRef.current = window.setInterval(hydrate, 30000);
     return () => {
       if (syncRef.current) clearInterval(syncRef.current);
     };
@@ -44,23 +44,32 @@ const useTaskTimer = (taskId) => {
   // Smooth UI tick (client-side) – increments local display each second
   const [displaySeconds, setDisplaySeconds] = useState(0);
   useEffect(() => {
-    // Reset display on each hydrate
-    setDisplaySeconds(serverLiveSeconds);
-  }, [serverLiveSeconds]);
+    if (!isTiming) {
+      setDisplaySeconds(serverLiveSeconds);
+    }
+  }, [serverLiveSeconds, isTiming]);
 
   useEffect(() => {
-    if (isTiming) {
+    if (isTiming && startIso) {
       tickRef.current = window.setInterval(() => {
-        setDisplaySeconds((prev) => prev + 1);
+        const now = dayjs().utc();
+        const start = dayjs(startIso).utc();
+
+        const diff = now.diff(start, 'second');
+
+        // ✅ FIXED
+        setDisplaySeconds(prev => prev + 1);
+
       }, 1000);
     } else if (tickRef.current) {
       clearInterval(tickRef.current);
       tickRef.current = null;
     }
+
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
     };
-  }, [isTiming]);
+  }, [isTiming, startIso, serverLiveSeconds]);
 
   // Re-hydrate when tab becomes active again (survives logout/back/refresh use-cases)
   useEffect(() => {
@@ -72,41 +81,47 @@ const useTaskTimer = (taskId) => {
   }, []);
 
   // Office hour auto-stop at 18:30 IST
-useEffect(() => {
-  const h = window.setInterval(async () => {
-    if (!isTiming) return;
-    const now = dayjs().tz(IST);
-    if (now.hour() === 18 && now.minute() === 30) {
-      try {
-        toast.info('Timer stopped automatically at 18:30 IST.');
-        // Just change status → backend will accumulate once
-        await axiosInstance.put(`/tasks/${taskId}/status`, { status: 'To-do' });
-        await hydrate();
-      } catch (err) {
-        console.error('Auto-stop/status failed:', err);
+  useEffect(() => {
+    const h = window.setInterval(async () => {
+      if (!isTiming) return;
+      const now = dayjs().tz(IST);
+      if (now.hour() === 18 && now.minute() === 30) {
+        try {
+          toast.info('Timer stopped automatically at 18:30 IST.');
+          // Just change status → backend will accumulate once
+          await axiosInstance.put(`/tasks/${taskId}/status`, { status: 'To-do' });
+          await hydrate();
+        } catch (err) {
+          console.error('Auto-stop/status failed:', err);
+        }
       }
-    }
-  }, 1000);
-  return () => clearInterval(h);
-}, [isTiming, taskId]);
+    }, 1000);
+    return () => clearInterval(h);
+  }, [isTiming, taskId]);
 
   const startTimer = async () => {
     try {
-      await axiosInstance.put(`/tasks/${taskId}/start`);
+      await axiosInstance.put(`/tasks/${taskId}/status`, {
+        status: 'Working'
+      });
       await hydrate();
     } catch (e) {
       console.error('Start timer failed:', e);
     }
   };
 
-  const stopTimer = async () => {
-    try {
-      await axiosInstance.put(`/tasks/${taskId}/stop`);
-      await hydrate();
-    } catch (e) {
-      console.error('Stop timer failed:', e);
-    }
-  };
+const stopTimer = async () => {
+  if (!isTiming) return; // ❌ prevent duplicate call
+
+  try {
+    await axiosInstance.put(`/tasks/${taskId}/status`, {
+      status: 'To-do'
+    });
+    await hydrate();
+  } catch (e) {
+    console.error('Stop timer failed:', e);
+  }
+};
 
   const formatTime = (seconds) => {
     const h = String(Math.floor(seconds / 3600)).padStart(2, '0');

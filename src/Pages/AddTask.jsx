@@ -83,11 +83,7 @@ const AddTask = () => {
       });
     } catch (error) {
       console.error('Task creation failed:', error.response?.data || error);
-      toast.error(
-  error.response?.data?.errors
-    ? Object.values(error.response.data.errors).flat().join(', ')
-    : 'Task creation failed'
-);
+      toast.error('Task creation failed. Please check required fields.');
     } finally {
       setLoading(false);
       setTimeout(() => {
